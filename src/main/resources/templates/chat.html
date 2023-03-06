@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket Chat Test</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        var ws;
+        function connect() {
+            var username = $('#username').val();
+            if (username === '') {
+                alert('Please enter a username.');
+                return;
+            }
+            ws = new WebSocket('ws://' + window.location.host + '/ws/chat');
+            ws.onopen = function(event) {
+                console.log('WebSocket is connected.');
+                ws.send(JSON.stringify({type: 'join', username: username}));
+            };
+            ws.onmessage = function(event) {
+                console.log('WebSocket message received.');
+                var data = JSON.parse(event.data);
+                if (data.type === 'join') {
+                    $('#chat').append('<div><b>' + data.username + ' has joined the chat.</b></div>');
+                } else if (data.type === 'message') {
+                    $('#chat').append('<div><b>' + data.username + ':</b> ' + data.message + '</div>');
+                } else if (data.type === 'leave') {
+                    $('#chat').append('<div><b>' + data.username + ' has left the chat.</b></div>');
+                }
+            };
+            ws.onclose = function(event) {
+                console.log('WebSocket is closed.');
+                $('#chat').append('<div><b>WebSocket is closed.</b></div>');
+            };
+        }
+        function disconnect() {
+            ws.close();
+        }
+        function sendMessage() {
+            var message = $('#message').val();
+            ws.send(JSON.stringify({type: 'message', username: $('#username').val(), message: message}));
+            $('#message').val('');
+        }
+    </script>
+</head>
+<body>
+<h1>WebSocket Chat Test</h1>
+<div>
+    <label for="username">Username:</label>
+    <input type="text" id="username">
+    <button onclick="connect()">Connect</button>
+    <button onclick="disconnect()">Disconnect</button>
+</div>
+<div>
+    <label for="message">Message:</label>
+    <input type="text" id="message">
+    <button onclick="sendMessage()">Send</button>
+</div>
+<div id="chat"></div>
+</body>
+</html>
